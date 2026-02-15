@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Proxy Project</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .sub { color: #aaa; margin-bottom: 30px; }
+        .main-box {
+            background: #2d2d3a;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #404054;
+        }
+        .url-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 50px;
+            background: #1e1e2a;
+            color: white;
+            font-size: 1rem;
+            border: 2px solid #404054;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .proxy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .proxy-card {
+            background: #1e1e2a;
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .proxy-card:hover {
+            border-color: #667eea;
+            background: #252535;
+        }
+        .proxy-card.selected {
+            border-color: #4caf50;
+            background: #1a3520;
+        }
+        .proxy-country { font-weight: bold; color: white; font-size: 1.1rem; }
+        .proxy-city { color: #4caf50; font-size: 0.9rem; margin: 5px 0; }
+        .proxy-ip { color: #888; font-size: 0.8rem; font-family: monospace; }
+        .go-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .go-btn:hover { background: #764ba2; }
+        .footer { text-align: center; color: #666; margin-top: 30px; }
+        #resultFrame {
+            width: 100%;
+            height: 500px;
+            border: none;
+            background: white;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 School Proxy Project</h1>
+        <div class="sub">10 working proxies · Click & type</div>
+        
+        <div class="main-box">
+            <div class="url-bar">
+                <input type="text" id="urlInput" placeholder="Enter URL (e.g., google.com)" value="google.com">
+            </div>
+            
+            <div style="margin-bottom: 20px;">👇 Click a proxy:</div>
+            
+            <div class="proxy-grid" id="proxyGrid"></div>
+            
+            <button class="go-btn" onclick="goToUrl()" id="goBtn">Select a proxy first</button>
+        </div>
+
+        <iframe id="resultFrame" style="display: none;"></iframe>
+        
+        <div class="footer">
+            ✅ Backend: <span id="backendUrl">https://school-proxy-backend.onrender.com</span>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'https://school-proxy-backend.onrender.com'; // REPLACE WITH YOUR RENDER URL
+        let proxies = [];
+        let selectedIndex = null;
+
+        async function loadProxies() {
+            try {
+                const res = await fetch(BACKEND_URL + '/proxies');
+                proxies = await res.json();
+                renderProxies();
+            } catch (err) {
+                document.getElementById('proxyGrid').innerHTML = '<p style="color:red;">Error loading proxies. Make sure backend is running.</p>';
+            }
+        }
+
+        function renderProxies() {
+            const grid = document.getElementById('proxyGrid');
+            grid.innerHTML = proxies.map((p, i) => `
+                <div class="proxy-card" onclick="selectProxy(${i})" id="proxy-${i}">
+                    <div class="proxy-country">${p.country}</div>
+                    <div class="proxy-city">${p.city}</div>
+                    <div class="proxy-ip">${p.ip}:${p.port}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectProxy(i) {
+            selectedIndex = i;
+            document.querySelectorAll('.proxy-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('proxy-' + i).classList.add('selected');
+            document.getElementById('goBtn').textContent = `🚀 GO with ${proxies[i].country} (${proxies[i].city})`;
+        }
+
+        function goToUrl() {
+            if (selectedIndex === null) return alert('Select a proxy first!');
+            let url = document.getElementById('urlInput').value;
+            if (!url) return alert('Enter a URL');
+            if (!url.startsWith('http')) url = 'https://' + url;
+
+            const iframe = document.getElementById('resultFrame');
+            iframe.style.display = 'block';
+            iframe.src = BACKEND_URL + '/fetch?url=' + encodeURIComponent(url) + '&proxyIndex=' + selectedIndex;
+        }
+
+        loadProxies();
+    </script>
+</body>
+</html>
